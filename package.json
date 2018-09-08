@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "nodemon --exec \"wt serve index.js --hostname localhost --port 1337\""
   },
   "author": "",
   "license": "ISC",
