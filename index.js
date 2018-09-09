@@ -58,7 +58,7 @@ app.post("/geo", (req, res) => {
           const { currently, hourly, daily } = data;
           return res
             .status(200)
-            .send({ currently, hourly, daily, lat, lng, rest });
+            .send({ currently, hourly, daily, lat, lng, ...rest });
         })
         .catch(() => {
           return res.status(400).send({ reason: "Weather failed" });
