@@ -9,18 +9,21 @@ const jsonParser = bodyParser.json();
 
 app.use(jsonParser);
 
-app.post("/geo", (req, res) => {
+const makeGeoURL = (key, encodedAddress) =>
+  `http://www.mapquestapi.com/geocoding/v1/address?key=${key}&location=${encodedAddress}`;
+
+const makeWeatherURL = (key, { lat, lng }) =>
+  `https://api.darksky.net/forecast/${key}/${lat},${lng}?units=si`;
+
+app.post("/geoweather", (req, res) => {
   const { webtaskContext, body } = req;
   const { address } = body;
   const {
     secrets: { GEOLOCATION_KEY, WEATHER_KEY }
   } = webtaskContext;
-  // forward lat,long to GEO api
-  // use response to call weather api
-  // process data and return
 
   const encodedAddress = encodeURIComponent(address);
-  const url = `http://www.mapquestapi.com/geocoding/v1/address?key=${GEOLOCATION_KEY}&location=${encodedAddress}`;
+  const url = makeGeoURL(GEOLOCATION_KEY, encodedAddress);
 
   return axios
     .get(url)
@@ -45,14 +48,14 @@ app.post("/geo", (req, res) => {
       };
     })
     .then(({ lat, lng, ...rest }) => {
-      const url = `https://api.darksky.net/forecast/${WEATHER_KEY}/${lat},${lng}?units=si`;
+      const url = makeWeatherURL(WEATHER_KEY, { lat, lng });
       return axios
         .get(url)
         .then(({ data }) => {
           if (data.error) {
             return res
               .status(400)
-              .reason({ error: "Weather API gave errorenous data" });
+              .send({ error: "Weather API gave errorenous data" });
           }
           const { currently, hourly, daily } = data;
           return res
@@ -64,6 +67,31 @@ app.post("/geo", (req, res) => {
         });
     })
     .catch(() => res.status(400).send({ reason: "Location failed" }));
+});
+
+app.post("/weather", (req, res) => {
+  const { webtaskContext, body } = req;
+  const {
+    secrets: { WEATHER_KEY }
+  } = webtaskContext;
+
+  const { lat, lng } = body;
+  const url = makeWeatherURL(WEATHER_KEY, { lat, lng });
+
+  return axios
+    .get(url)
+    .then(({ data }) => {
+      if (data.error) {
+        return res
+          .status(400)
+          .send({ error: "Weather API gave errorenous data" });
+      }
+      const { currently, hourly, daily } = data;
+      return res.status(200).send({ currently, hourly, daily, lat, lng });
+    })
+    .catch(() => {
+      return res.status(400).send({ reason: "Weather failed" });
+    });
 });
 
 module.exports = Webtask.fromExpress(app);
