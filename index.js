@@ -27,8 +27,7 @@ app.post("/geo", (req, res) => {
     .then(({ data }) => {
       if (
         data.results === undefined ||
-        data.results[0].locations.length === 0 ||
-        !data.results[0].locations[0].street
+        data.results[0].locations.length === 0
       ) {
         return res.status(400).send({ reason: "Your query gave no results" });
       }
@@ -36,7 +35,7 @@ app.post("/geo", (req, res) => {
       const [
         { street, postalCode, adminArea5, adminArea1, latLng }
       ] = data.results[0].locations;
-      console.log(street);
+
       return {
         street,
         postalCode,
